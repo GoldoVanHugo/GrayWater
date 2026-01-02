@@ -1,0 +1,16 @@
+# Shower
+SHOWER_WATER_PER_MIN = 10
+SHOWER_TIME = 8
+SHOWER_USABLE_FACTOR = .8
+
+# WC
+WC_WATER = 6
+WC_PER_DAY = 5
+
+# Simulation
+DAY_IN_MIN = 24 * 60
+SIMULATION_DAYS = 7
+PERSONS = 50
+
+# Gray water system
+TANK_MAX = 800
