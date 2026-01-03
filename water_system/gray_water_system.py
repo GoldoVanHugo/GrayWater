@@ -1,54 +1,96 @@
 from .water_system_base import WaterSystemBase
+from logger import (
+    EventLogger,
+    LoggerActionTypes,
+)
+
 from config import (
     SHOWER_USABLE_FACTOR,
     WC_WATER,
+    LAUNDRY_WATER,
 )
 
 class GrayWaterSystem(WaterSystemBase):
-    GRAY = "Gray water in tank"
-
-    def __init__(self, gray_tank_max: int):
-        super().__init__()
-        self.gray = 0
+    def __init__(self, logger: EventLogger, gray_tank_max: int):
+        super().__init__(logger=logger)
+        self.gray_tank = 0
         self.gray_tank_max = gray_tank_max
 
-        self._daily_data[self.GRAY] = 0
+    def _add_gray_water(self, amount: float | int, usable_factor: float, env_time: int, person: str, action: LoggerActionTypes):
+        self._add_fresh(
+            amount=amount,
+            env_time=env_time,
+            person=person,
+            action=action,
+        )
 
-    # ---- Logic ----
-    def _add_gray(self, volume):
-        self.gray += volume
-        self._daily_data[self.GRAY] += volume
+        usable = amount * usable_factor
+        losses = amount - usable
 
-    def _reset_gray(self):
-        self.gray = 0
-        self._daily_data[self.GRAY] = 0
+        storage = min(usable, self.gray_tank_max - self.gray_tank)
+        loss = usable - storage + losses
 
-    def _add_gray_water(self, volume: int, usable_factor: float):
-        self._add_fresh(volume=volume)
+        if storage > 0:
+            self._add_gray(
+                amount=storage,
+                env_time=env_time,
+                person=person,
+                action=action,
+            )
+            self.gray_tank += storage
 
-        usable = volume * usable_factor
-        losses = volume - usable
+        if loss > 0:
+            self._add_black(
+                amount=loss,
+                env_time=env_time,
+                person=person,
+                action=action,
+            )
 
-        storage = min(usable, self.gray_tank_max - self.gray)
-        self._add_gray(volume=storage)
-        self._add_black(volume=usable - storage + losses)
-
-    def _use_gray_or_fresh_water(self, volume: int):
-        if self.gray >= volume:
-            self._add_gray(-volume)
+    def _use_gray_or_fresh_water(self, amount: float | int, env_time: int, person: str, action: LoggerActionTypes):
+        if self.gray_tank >= amount:
+            self.gray_tank -= amount
         else:
-            missing = volume - self.gray
-            self._reset_gray()
-            self._add_fresh(volume=missing)
+            missing = amount - self.gray_tank
+            self.gray_tank = 0
+            self._add_fresh(
+                amount=missing,
+                env_time=env_time,
+                person=person,
+                action=action,
+            )
+
+        self._add_black(
+            amount=amount,
+            env_time=env_time,
+            person=person,
+            action=action,
+        )
 
     # ---- Consumers ----
-    def shower(self, volume: int):
+    def shower(self, amount: float | int, env_time: int, person: str):
         self._add_gray_water(
-            volume=volume,
+            amount=amount,
             usable_factor=SHOWER_USABLE_FACTOR,
+            env_time=env_time,
+            person=person,
+            action=LoggerActionTypes.SHOWER.value
         )
 
 
-    def wc(self):
-        self._use_gray_or_fresh_water(volume=WC_WATER)
-        self._add_black(volume=WC_WATER)
+    def wc(self, env_time: int, person: str):
+        self._use_gray_or_fresh_water(
+            amount=WC_WATER,
+            env_time=env_time,
+            person=person,
+            action=LoggerActionTypes.WC.value
+        )
+
+    def laundry(self, env_time: int, person: str):
+        self._add_gray_water(
+            amount=LAUNDRY_WATER,
+            usable_factor=1.,
+            env_time=env_time,
+            person=person,
+            action=LoggerActionTypes.LAUNDRY.value
+        )

@@ -1,18 +1,60 @@
 from .water_system_base import WaterSystemBase
+from logger import LoggerActionTypes
 from config import (
+    SHOWER_USABLE_FACTOR,
     WC_WATER,
+    LAUNDRY_WATER
 )
 
 
 class NormalWaterSystem(WaterSystemBase):
     # ---- Logic ----
-    def _fresh_to_drain(self, volume: int):
-        self._add_fresh(volume=volume)
-        self._add_black(volume=volume)
+    def _fresh_to_black(self, amount: float | int, env_time: int, person: str, action: LoggerActionTypes, gray_water_factor: float = .0):
+        self._add_fresh(
+            amount=amount,
+            env_time=env_time,
+            person=person,
+            action=action
+        )
+        if gray_water_factor > 0.:
+            gray_water = amount * gray_water_factor
+            self._add_gray(
+                amount=gray_water,
+                env_time=env_time,
+                person=person,
+                action=action,
+            )
+
+        self._add_black(
+            amount=amount,
+            env_time=env_time,
+            person=person,
+            action=action
+        )
 
     # ---- Consumers ----
-    def shower(self, volume: int):
-        self._fresh_to_drain(volume=volume)
+    def shower(self, amount: float | int, env_time: int, person: str):
+        self._fresh_to_black(
+            amount=amount,
+            env_time=env_time,
+            person=person,
+            action=LoggerActionTypes.SHOWER.value,
+            gray_water_factor=SHOWER_USABLE_FACTOR,
+        )
 
-    def wc(self):
-        self._fresh_to_drain(volume=WC_WATER)
+    def wc(self, env_time: int, person: str):
+        self._fresh_to_black(
+            amount=WC_WATER,
+            env_time=env_time,
+            person=person,
+            action=LoggerActionTypes.WC.value
+        )
+
+    def laundry(self, env_time: int, person: str):
+        self._fresh_to_black(
+            amount=LAUNDRY_WATER,
+            env_time=env_time,
+            person=person,
+            action=LoggerActionTypes.LAUNDRY.value,
+            gray_water_factor=1.
+        )

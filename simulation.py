@@ -1,4 +1,7 @@
+import os
 import simpy
+import random
+
 from matplotlib import pyplot as plt
 
 from water_system import (
@@ -6,6 +9,7 @@ from water_system import (
     GrayWaterSystem,
     NormalWaterSystem,
 )
+from logger import EventLogger
 from config import (
     DAY_IN_MIN,
     TANK_MAX,
@@ -13,54 +17,39 @@ from config import (
     SIMULATION_DAYS,
 )
 from generators import (
-    person,
-    day_process,
+    person_per_day,
 )
 
 
 def simulation(env: simpy.Environment, system: WaterSystemBase, title: str):
-    for i in range(PERSONS):
-        env.process(generator=person(
-            env=env,
-            name=f"Person {i + 1}",
-            system=system,
-            days=SIMULATION_DAYS,
-        ))
+    # set a seed for random values
+    random.seed(42)
 
-    env.process(generator=day_process(
-        env=env,
-        system=system,
-        days=SIMULATION_DAYS,
-    ))
+    for i in range(PERSONS):
+        env.process(
+            person_per_day(
+                env=env,
+                name=f"Person {i + 1}",
+                system=system,
+                days=SIMULATION_DAYS
+        )
+        )
 
     env.run(until=SIMULATION_DAYS * DAY_IN_MIN + 1)
 
-    days = list(range(1, SIMULATION_DAYS + 1))
-
-    report_data = system.report_data
-    data_per_label = {}
-    for label in report_data[0].keys():
-        data_per_label[label] = [d[label] for d in report_data]
-
-    plt.figure(figsize=(10, 6))
-    for label, data in data_per_label.items():
-        plt.plot(days, data, marker="o", label=label)
-    plt.xlabel("Day")
-    plt.ylabel("Liter")
-    plt.title(f"Water consumption per day for a {title}")
-    plt.grid(True)
-    plt.legend()
-    plt.savefig(f"{title.lower().replace(' ', '_')}.png")
-
-    plt.close()
+    system.save_logger()
+    system.logger_analyze()
 
 
 if __name__ == "__main__":
+
     gray_water_env = simpy.Environment()
-    gray_water_system = GrayWaterSystem(gray_tank_max=TANK_MAX)
+    gray_water_logger = EventLogger(name="logger", storage_path="gray_water_system")
+    gray_water_system = GrayWaterSystem(logger=gray_water_logger, gray_tank_max=TANK_MAX)
 
     normal_water_env = simpy.Environment()
-    normal_water_system = NormalWaterSystem()
+    normal_water_logger = EventLogger(name="logger", storage_path="normal_water_system")
+    normal_water_system = NormalWaterSystem(logger=normal_water_logger)
 
     simulation(
         env=gray_water_env,
