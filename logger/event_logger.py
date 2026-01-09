@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import  csv
 
 from matplotlib import pyplot as plt
 
@@ -38,7 +39,7 @@ class EventLogger:
             LoggerHeaderKey.TIME_OF_DAY.value: f"{hour:02d}:{minute:02d}",
             LoggerHeaderKey.PERSON.value: person,
             LoggerHeaderKey.ACTION.value: action,
-            LoggerHeaderKey.AMOUNT_L.value: amount,
+            LoggerHeaderKey.AMOUNT_L.value: abs(amount),
             LoggerHeaderKey.WATER_TYPE.value: water_type,
         })
 
@@ -86,12 +87,17 @@ class EventLogger:
         plt.ylabel("Water amount in liter")
         plt.title("Water amount over the year")
         plt.grid(axis="y")
-        self._save_plot(file_name="water_amount_year.png")
+        file_name = "water_amount_year"
+        self._save_plot(file_name=f"{file_name}.png")
+        csv_data = [["Water Type", "Amount"]]
+        csv_data += [[wt, total.get(wt, 0)] for wt in water_types]
+        self._save_csv(file_name=f"{file_name}.csv", data=csv_data)
 
     def analyze_over_days(self, df: pd.DataFrame):
         water_types = self._get_water_types(df=df)
         days = self._get_days(df=df)
 
+        csv_data = [["Water Types"] + [f"Day {i}" for i in range(days[0], days[-1] + 1)]]
         plt.figure()
         for wt in water_types:
             daily = (
@@ -101,13 +107,17 @@ class EventLogger:
                 .reindex(range(days[0], days[-1] + 1), fill_value=0)
             )
             plt.plot(daily.values, label=wt)
+            data = [wt] + list(daily.values)
+            csv_data.append(data)
 
         plt.xlabel("Day")
         plt.ylabel("Water amount in liter")
         plt.title("Daily water consumption")
         plt.legend()
         plt.grid()
-        self._save_plot(file_name="daily_water_consumption.png")
+        file_name = "daily_water_consumption"
+        self._save_plot(file_name=f"{file_name}.png")
+        self._save_csv(file_name=f"{file_name}.csv", data=csv_data)
 
     def analyze_per_hour(self, df: pd.DataFrame):
         water_types = self._get_water_types(df=df)
@@ -115,6 +125,7 @@ class EventLogger:
         df = df.copy()
         df["hour"] = df[LoggerHeaderKey.TIME_OF_DAY.value].str[:2].astype(int)
 
+        csv_data = [["Water Types"] + [f"Hour {i}" for i in range(24)]]
         plt.figure()
         for wt in water_types:
             hourly = (
@@ -124,6 +135,8 @@ class EventLogger:
                 .reindex(range(24), fill_value=0)
             )
             plt.plot(hourly.values, label=wt)
+            data = [wt] + list(hourly.values)
+            csv_data.append(data)
 
         plt.xlabel("Hours of the day")
         plt.ylabel("Water amount in liter/year")
@@ -131,7 +144,9 @@ class EventLogger:
         plt.xticks(range(24))
         plt.legend()
         plt.grid()
-        self._save_plot(file_name="hour_profile.png")
+        file_name = "hour_profile"
+        self._save_plot(file_name=f"{file_name}.png")
+        self._save_csv(file_name=file_name, data=csv_data)
 
     @staticmethod
     def _get_water_types(df: pd.DataFrame):
@@ -150,3 +165,13 @@ class EventLogger:
         store_path = os.path.join(store_path, file_name)
         plt.savefig(store_path)
         plt.close()
+
+    def _save_csv(self, file_name: str, data: list):
+        if self.storage_path is not None:
+            store_path = self.storage_path
+        else:
+            store_path = self.name
+
+        with open(os.path.join(store_path, file_name), mode="w", newline="", encoding="utf-8") as file:
+            writer = csv.writer(file)
+            writer.writerows(data)

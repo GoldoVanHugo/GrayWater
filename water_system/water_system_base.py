@@ -12,7 +12,7 @@ class WaterSystemBase:
         # water type
         self.fresh = 0
         self.black = 0
-        self.gray = 0
+        self.grey = 0
 
         self.logger = logger
 
@@ -43,17 +43,14 @@ class WaterSystemBase:
             water_type=LoggerWaterTypes.BLACK.value,
         )
 
-    def _add_gray(self, amount: float | int, env_time: int, person: str, action: LoggerActionTypes):
-        if amount <= 0:
-            raise ValueError("Black water amount must be more then 0.")
-
-        self.gray += amount
+    def _add_grey(self, amount: float | int, env_time: int, person: str, action: LoggerActionTypes):
+        self.grey += amount
         self.logger.log(
             env_time=env_time,
             person=person,
             action=action,
             amount=amount,
-            water_type=LoggerWaterTypes.GRAY.value,
+            water_type=LoggerWaterTypes.GREY.value,
         )
 
     # ---- Consumers ----

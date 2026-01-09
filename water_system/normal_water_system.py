@@ -9,16 +9,16 @@ from config import (
 
 class NormalWaterSystem(WaterSystemBase):
     # ---- Logic ----
-    def _fresh_to_black(self, amount: float | int, env_time: int, person: str, action: LoggerActionTypes, gray_water_factor: float = .0):
+    def _fresh_to_black(self, amount: float | int, env_time: int, person: str, action: LoggerActionTypes, grey_water_factor: float = .0):
         self._add_fresh(
             amount=amount,
             env_time=env_time,
             person=person,
             action=action
         )
-        if gray_water_factor > 0.:
-            gray_water = amount * gray_water_factor
-            self._add_gray(
+        if grey_water_factor > 0.:
+            gray_water = amount * grey_water_factor
+            self._add_grey(
                 amount=gray_water,
                 env_time=env_time,
                 person=person,
@@ -39,7 +39,7 @@ class NormalWaterSystem(WaterSystemBase):
             env_time=env_time,
             person=person,
             action=LoggerActionTypes.SHOWER.value,
-            gray_water_factor=SHOWER_USABLE_FACTOR,
+            grey_water_factor=SHOWER_USABLE_FACTOR,
         )
 
     def wc(self, env_time: int, person: str):
@@ -56,5 +56,5 @@ class NormalWaterSystem(WaterSystemBase):
             env_time=env_time,
             person=person,
             action=LoggerActionTypes.LAUNDRY.value,
-            gray_water_factor=1.
+            grey_water_factor=1.
         )

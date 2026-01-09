@@ -14,7 +14,7 @@ class LoggerHeaderKey(Enum):
 class LoggerWaterTypes(Enum):
     FRESH = "Fresh water"
     BLACK = "Black water"
-    GRAY = "Gray water"
+    GREY = "Grey water"
 
 
 class LoggerActionTypes(Enum):
