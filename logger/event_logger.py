@@ -14,9 +14,10 @@ from .enums import (
 
 
 class EventLogger:
-    def __init__(self, name: str, storage_path: str = None):
+    def __init__(self, name: str, storage_path: str = None, plot_prefix: str = "normal"):
         self.name = name
         self.storage_path = storage_path
+        self.plot_prefix = plot_prefix
         self.events = []
         self.df = None
 
@@ -146,7 +147,7 @@ class EventLogger:
         plt.grid()
         file_name = "hour_profile"
         self._save_plot(file_name=f"{file_name}.png")
-        self._save_csv(file_name=file_name, data=csv_data)
+        self._save_csv(file_name=f"{file_name}.csv", data=csv_data)
 
     @staticmethod
     def _get_water_types(df: pd.DataFrame):
@@ -162,7 +163,7 @@ class EventLogger:
         else:
             store_path = self.name
 
-        store_path = os.path.join(store_path, file_name)
+        store_path = os.path.join(store_path, f"{self.plot_prefix}_{file_name}")
         plt.savefig(store_path)
         plt.close()
 

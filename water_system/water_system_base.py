@@ -66,6 +66,10 @@ class WaterSystemBase:
     def laundry(self, env_time: int, person: str):
         raise NotImplemented
 
+    @abstractmethod
+    def sink(self, env_time: int, person: str):
+        raise NotImplemented
+
     # ---- Logger ----
     def save_logger(self):
         self.logger.save()

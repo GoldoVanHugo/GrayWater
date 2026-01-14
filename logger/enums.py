@@ -21,3 +21,4 @@ class LoggerActionTypes(Enum):
     SHOWER = "shower"
     WC = "wc"
     LAUNDRY = "laundry"
+    SINK = "sink"

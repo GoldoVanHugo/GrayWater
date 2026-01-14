@@ -43,19 +43,15 @@ def simulation(env: simpy.Environment, system: WaterSystemBase):
 
 if __name__ == "__main__":
 
-    grey_water_env = simpy.Environment()
-    grey_water_logger = EventLogger(name="logger", storage_path="grey_water_system")
-    grey_water_system = GrayWaterSystem(logger=grey_water_logger, grey_tank_max=TANK_MAX)
+    for wt in ["normal", "grey"]:
+        water_env = simpy.Environment()
+        water_logger = EventLogger(name="logger", storage_path=f"{wt}_water_system", plot_prefix=wt)
+        if wt == "grey":
+            water_system = GrayWaterSystem(logger=water_logger, grey_tank_max=TANK_MAX)
+        else:
+            water_system = NormalWaterSystem(logger=water_logger)
 
-    normal_water_env = simpy.Environment()
-    normal_water_logger = EventLogger(name="logger", storage_path="normal_water_system")
-    normal_water_system = NormalWaterSystem(logger=normal_water_logger)
-
-    simulation(
-        env=grey_water_env,
-        system=grey_water_system,
-    )
-    simulation(
-        env=normal_water_env,
-        system=normal_water_system,
-    )
+        simulation(
+            env=water_env,
+            system=water_system,
+        )

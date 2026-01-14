@@ -3,7 +3,9 @@ from logger import LoggerActionTypes
 from config import (
     SHOWER_USABLE_FACTOR,
     WC_WATER,
-    LAUNDRY_WATER
+    LAUNDRY_WATER,
+    SINK_WATER,
+    SINK_USABLE_FACTOR,
 )
 
 
@@ -57,4 +59,13 @@ class NormalWaterSystem(WaterSystemBase):
             person=person,
             action=LoggerActionTypes.LAUNDRY.value,
             grey_water_factor=1.
+        )
+
+    def sink(self, env_time: int, person: str):
+        self._fresh_to_black(
+            amount=SINK_WATER,
+            env_time=env_time,
+            person=person,
+            action=LoggerActionTypes.SINK.value,
+            grey_water_factor=SINK_USABLE_FACTOR,
         )
