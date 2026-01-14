@@ -73,19 +73,32 @@ class EventLogger:
 
         return self.df
 
-    def analyze(self):
-        df = self.get_df()
-        self.analyze_year_amount(df=df)
-        self.analyze_over_days(df=df)
-        self.analyze_per_hour(df=df)
+    def analyze(self, y_max=None) -> dict[str, int]:
+        if y_max is None:
+            y_max = {}
 
-    def analyze_year_amount(self, df: pd.DataFrame):
+        df = self.get_df()
+        y_max_year = self.analyze_year_amount(df=df, y_max=y_max.get("year", None))
+        y_max_days = self.analyze_over_days(df=df, y_max=y_max.get("days", None))
+        y_max_hour = self.analyze_per_hour(df=df, y_max=y_max.get("hour", None))
+
+        return {
+            "year": y_max_year,
+            "days": y_max_days,
+            "hour": y_max_hour
+        }
+
+    def analyze_year_amount(self, df: pd.DataFrame, y_max: float = None) -> float:
         water_types = self._get_water_types(df=df)
         total = df.groupby(LoggerHeaderKey.WATER_TYPE.value)[LoggerHeaderKey.AMOUNT_L.value].sum()
+
+        if y_max is None:
+            y_max = int(max([total.get(wt, 0) for wt in water_types]) * 1.1)
 
         plt.figure()
         plt.bar(water_types, [total.get(wt, 0) for wt in water_types])
         plt.ylabel("Water amount in liter")
+        plt.ylim(bottom=0, top=y_max)
         plt.title("Water amount over the year")
         plt.grid(axis="y")
         file_name = "water_amount_year"
@@ -94,7 +107,9 @@ class EventLogger:
         csv_data += [[wt, total.get(wt, 0)] for wt in water_types]
         self._save_csv(file_name=f"{file_name}.csv", data=csv_data)
 
-    def analyze_over_days(self, df: pd.DataFrame):
+        return y_max
+
+    def analyze_over_days(self, df: pd.DataFrame, y_max: int = None) -> int:
         water_types = self._get_water_types(df=df)
         days = self._get_days(df=df)
 
@@ -111,8 +126,16 @@ class EventLogger:
             data = [wt] + list(daily.values)
             csv_data.append(data)
 
+        if y_max is None:
+            values = []
+            for values_per_type in csv_data[1:]:
+                values += values_per_type[1:]
+            y_max = int(max(values) * 1.1)
+
         plt.xlabel("Day")
+        plt.xlim(left=0)
         plt.ylabel("Water amount in liter")
+        plt.ylim(bottom=0, top=y_max)
         plt.title("Daily water consumption")
         plt.legend()
         plt.grid()
@@ -120,7 +143,9 @@ class EventLogger:
         self._save_plot(file_name=f"{file_name}.png")
         self._save_csv(file_name=f"{file_name}.csv", data=csv_data)
 
-    def analyze_per_hour(self, df: pd.DataFrame):
+        return y_max
+
+    def analyze_per_hour(self, df: pd.DataFrame, y_max: int = None) -> int:
         water_types = self._get_water_types(df=df)
 
         df = df.copy()
@@ -139,8 +164,16 @@ class EventLogger:
             data = [wt] + list(hourly.values)
             csv_data.append(data)
 
+        if y_max is None:
+            values = []
+            for values_per_type in csv_data[1:]:
+                values += values_per_type[1:]
+            y_max = int(max(values) * 1.1)
+
         plt.xlabel("Hours of the day")
+        plt.xlim(left=0)
         plt.ylabel("Water amount in liter/year")
+        plt.ylim(bottom=0, top=y_max)
         plt.title("Hour profile of water amount")
         plt.xticks(range(24))
         plt.legend()
@@ -148,6 +181,8 @@ class EventLogger:
         file_name = "hour_profile"
         self._save_plot(file_name=f"{file_name}.png")
         self._save_csv(file_name=f"{file_name}.csv", data=csv_data)
+
+        return y_max
 
     @staticmethod
     def _get_water_types(df: pd.DataFrame):

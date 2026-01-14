@@ -21,7 +21,7 @@ from generators import (
 )
 
 
-def simulation(env: simpy.Environment, system: WaterSystemBase):
+def simulation(env: simpy.Environment, system: WaterSystemBase, y_max: dict[str, int] = None):
     # set a seed for random values
     random.seed(42)
 
@@ -32,16 +32,19 @@ def simulation(env: simpy.Environment, system: WaterSystemBase):
                 name=f"Person {i + 1}",
                 system=system,
                 days=SIMULATION_DAYS
-        )
+            )
         )
 
     env.run(until=SIMULATION_DAYS * DAY_IN_MIN + 1)
 
     system.save_logger()
-    system.logger_analyze()
+
+    return system.logger_analyze(y_max=y_max)
 
 
 if __name__ == "__main__":
+
+    y_max_ = None
 
     for wt in ["normal", "grey"]:
         water_env = simpy.Environment()
@@ -51,7 +54,8 @@ if __name__ == "__main__":
         else:
             water_system = NormalWaterSystem(logger=water_logger)
 
-        simulation(
+        y_max_ = simulation(
             env=water_env,
             system=water_system,
+            y_max=y_max_
         )

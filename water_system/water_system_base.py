@@ -77,5 +77,5 @@ class WaterSystemBase:
     def load_logger(self, load_path: str = None):
         self.logger.load(load_file=load_path)
 
-    def logger_analyze(self):
-        self.logger.analyze()
+    def logger_analyze(self, y_max=None):
+        return self.logger.analyze(y_max=y_max)
